@@ -25,12 +25,13 @@ export default function App() {
   const correct = evaluateAnswer(current,choice);
   setSaved(old=>({...old,records:[...old.records,{questionId:current.id,selected:choice,correct,independent:!hint}]}));
   setFeedback(correct?'correct':'incorrect');
+  if (!correct && saved.mode === 'adaptive') setHint(true);
  }
  function next() {
   const n = getNextQuestionIndex(saved.records,questions.length);
-  setIndex(n ?? 0); setChoice(null); setFeedback(null); setHint(false);
+  setIndex(n ?? 0); setChoice(null); setFeedback(null); setHint(saved.mode === 'guided');
  }
- function reset() { setSaved(old=>({...old,records:[]})); setIndex(0); setChoice(null); setFeedback(null); setHint(false); }
+ function reset() { setSaved(old=>({...old,records:[]})); setIndex(0); setChoice(null); setFeedback(null); setHint(saved.mode === 'guided'); }
  return <div className="shell">
   <header><a className="brand" href="#"><span className="mark"><BookOpen size={19}/></span>learning<span className="muted">studio</span></a><nav><a className="active" href="#learn">My learning</a><a href="#course">Courses</a><button onClick={()=>setNotesOpen(v=>!v)}><NotebookPen size={15}/> Notes</button></nav><span className="avatar">G</span></header>
   <main>
@@ -41,7 +42,7 @@ export default function App() {
     </article>
    </section>
    <section className="learning"><div className="lesson"><div className="heading"><div><p className="eyebrow">LESSON 01 / PRACTICE</p><h2>Check your understanding</h2></div><span className="count">{Math.min(completed.size+1,3)} / 3</span></div>
-    <div className="modes">{(['adaptive','guided','self-paced'] as LearningMode[]).map(m=><button key={m} className={saved.mode===m?'chosen':''} onClick={()=>setSaved(o=>({...o,mode:m}))}>{m==='adaptive'?<Sparkles size={14}/>:m==='guided'?<Lightbulb size={14}/>:<Clock3 size={14}/>} {m==='self-paced'?'Self-paced':m[0].toUpperCase()+m.slice(1)}</button>)}</div>
+    <div className="modes">{(['adaptive','guided','self-paced'] as LearningMode[]).map(m=><button key={m} className={saved.mode===m?'chosen':''} onClick={()=>{setSaved(o=>({...o,mode:m}));setHint(m==='guided')}}>{m==='adaptive'?<Sparkles size={14}/>:m==='guided'?<Lightbulb size={14}/>:<Clock3 size={14}/>} {m==='self-paced'?'Self-paced':m[0].toUpperCase()+m.slice(1)}</button>)}</div>
     <article className="question">{finished?<div className="finished"><span className="success"><Check size={26}/></span><p className="eyebrow">CHECKPOINT COMPLETE</p><h3>You made it through all three checks.</h3><p>Independent mastery: {mastery}%. Try again later to see what you can recall without support.</p><button className="primary" onClick={reset}><RotateCcw size={15}/> Practice again</button></div>:<>
      <div className="qtop"><span>CONCEPT {index+1} OF 3</span><span>{current.concept}</span></div><h3>{current.prompt}</h3>{current.code&&<pre>{current.code}</pre>}
      <div className="choices">{current.choices.map((c,i)=><button key={c} disabled={!!feedback} className={'choice '+(choice===i?'selected ':'')+(feedback&&i===current.answer?' right ':'')+(feedback&&choice===i&&i!==current.answer?' wrong':'')} onClick={()=>setChoice(i)}><span>{String.fromCharCode(65+i)}</span>{c}{feedback&&i===current.answer&&<Check size={16}/>}</button>)}</div>
